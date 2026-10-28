@@ -53,8 +53,14 @@ android.minapi = 21
 # (str) Android NDK version to use
 android.ndk = 25b
 
+# (str) Android SDK path to use
+# android.sdk_path = 
+
+# (str) Android NDK path to use
+# android.ndk_path = 
+
 # (bool) If True, then skip trying to update the Android sdk
-android.skip_update = False
+android.skip_update = True
 
 # (bool) If True, then automatically accept SDK license
 android.accept_sdk_license = True
