@@ -8,6 +8,7 @@ import shutil
 import logging
 from collections import OrderedDict
 from typing import Optional, Dict
+from storage.path_utils import get_base_storage_dir
 
 logger = logging.getLogger("CacheManager")
 
@@ -28,7 +29,7 @@ class CacheManager:
         if cache_dir:
             self.cache_dir = cache_dir
         else:
-            self.cache_dir = os.path.expanduser("~/.telegram_lite/cache")
+            self.cache_dir = os.path.join(get_base_storage_dir(), "cache")
 
         os.makedirs(self.cache_dir, exist_ok=True)
         self.avatars_dir = os.path.join(self.cache_dir, "avatars")

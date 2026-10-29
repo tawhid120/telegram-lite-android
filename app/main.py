@@ -18,6 +18,7 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 
 from app.config import AppConfig
+from storage.path_utils import get_base_storage_dir
 from storage.secure_store import SecureSessionStore
 from storage.pin_store import PinStore
 from storage.cache_manager import CacheManager
@@ -46,10 +47,11 @@ class TelegramLiteApp(App):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.secure_store = SecureSessionStore()
-        self.pin_store = PinStore()
-        self.cache_manager = CacheManager()
-        self.app_config = AppConfig(self.secure_store)
+        base_dir = get_base_storage_dir()
+        self.secure_store = SecureSessionStore(base_dir=os.path.join(base_dir, "secure"))
+        self.pin_store = PinStore(db_path=os.path.join(base_dir, "data", "pins.db"))
+        self.cache_manager = CacheManager(cache_dir=os.path.join(base_dir, "cache"))
+        self.app_config = AppConfig(self.secure_store, config_path=os.path.join(base_dir, "config.json"))
         self.client_wrapper: TelegramClientWrapper = None
         self.sm: ScreenManager = None
 

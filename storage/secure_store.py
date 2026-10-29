@@ -9,6 +9,7 @@ import base64
 import hashlib
 import logging
 from typing import Optional, Tuple
+from storage.path_utils import get_base_storage_dir
 
 logger = logging.getLogger("SecureStore")
 
@@ -38,15 +39,8 @@ class SecureSessionStore:
 
     def _detect_storage_dir(self) -> str:
         """Determine safe storage directory for the platform."""
-        if self._check_is_android():
-            # In python-for-android, app internal storage is in ANDROID_ARGUMENT or /data/data
-            android_app_dir = os.environ.get("ANDROID_ARGUMENT")
-            if android_app_dir and os.path.isdir(android_app_dir):
-                target = os.path.join(android_app_dir, "secure_store")
-            else:
-                target = os.path.expanduser("~/.telegram_lite/secure")
-        else:
-            target = os.path.expanduser("~/.telegram_lite/secure")
+        base = get_base_storage_dir()
+        target = os.path.join(base, "secure")
         return target
 
     def _get_encryption_key(self) -> bytes:

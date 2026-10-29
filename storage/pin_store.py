@@ -9,6 +9,7 @@ import time
 import logging
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
+from storage.path_utils import get_base_storage_dir
 
 logger = logging.getLogger("PinStore")
 
@@ -43,7 +44,7 @@ class PinStore:
         if db_path:
             self._db_path = db_path
         else:
-            base_dir = os.path.expanduser("~/.telegram_lite/data")
+            base_dir = os.path.join(get_base_storage_dir(), "data")
             os.makedirs(base_dir, exist_ok=True)
             self._db_path = os.path.join(base_dir, "pins.db")
 

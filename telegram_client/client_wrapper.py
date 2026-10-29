@@ -134,7 +134,7 @@ class TelegramClientWrapper:
                 self.api_hash,
                 device_model="Android Go Edition",
                 system_version="Android 13 Go",
-                app_version="0.1.0",
+                app_version="0.1.1",
                 lang_code="en",
                 system_lang_code="en",
                 flood_sleep_threshold=30,

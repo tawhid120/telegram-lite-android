@@ -25,7 +25,7 @@ source.exclude_exts = spec,tmp,log
 source.exclude_dirs = tests,bin,.buildozer,.github,docs,scripts,.pytest_cache
 
 # (str) Application versioning
-version = 0.1.0
+version = 0.1.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy

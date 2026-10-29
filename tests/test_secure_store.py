@@ -67,3 +67,25 @@ def test_api_credentials_storage():
         assert store.load_api_credentials() is None
     finally:
         shutil.rmtree(tmp_dir)
+
+
+def test_storage_path_utils():
+    from storage.path_utils import get_base_storage_dir
+    base = get_base_storage_dir()
+    assert os.path.exists(base)
+    assert os.path.isdir(base)
+    # Verify write access
+    probe = os.path.join(base, ".test_probe")
+    with open(probe, "w") as f:
+        f.write("test")
+    assert os.path.exists(probe)
+    os.remove(probe)
+
+
+def test_app_config_default_credentials():
+    from app.config import AppConfig
+    store = SecureSessionStore(base_dir=tempfile.mkdtemp())
+    config = AppConfig(store, config_path="/nonexistent/config.json")
+    api_id, api_hash = config.get_api_credentials()
+    assert api_id == 20193909
+    assert api_hash == "82cd035fc1eb439bda68b2bfc75a57cb"
