@@ -29,7 +29,7 @@ version = 0.1.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.3.1,pyjnius,sqlite3,openssl,telethon,pyaes,rsa,pyasn1
+requirements = python3,kivy==2.3.1,pyjnius,sqlite3,openssl,telethon,pyaes,rsa,pyasn1,certifi,chardet,idna,requests,urllib3,filetype,six
 
 # (str) Presplash of the application
 presplash.filename = %(source.dir)s/assets/presplash.png
@@ -70,9 +70,6 @@ android.entrypoint = org.kivy.android.PythonActivity
 
 # (list) List of architectures to build for
 android.archs = arm64-v8a, armeabi-v7a
-
-# (str) python-for-android branch to use
-p4a.branch = develop
 
 # (str) Directory for local custom build recipes
 p4a.local_recipes = ./recipes
