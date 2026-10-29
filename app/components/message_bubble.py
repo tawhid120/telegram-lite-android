@@ -101,7 +101,7 @@ class MessageBubbleWidget(BoxLayout):
 
         # Media indicator
         if message.media_type:
-            media_info = f"📎 [{message.media_type.upper()}]"
+            media_info = f"[{message.media_type.upper()}]"
             if message.media_name:
                 media_info += f" {message.media_name}"
             if message.media_size_str:

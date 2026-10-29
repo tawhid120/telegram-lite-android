@@ -66,6 +66,7 @@ class TelegramClientWrapper:
 
         # Cached in-memory dialogs for instant tab switching
         self._cached_summaries: List[ChatSummary] = []
+        self._entity_cache: Dict[int, Any] = {}
         self._is_connected = False
 
     def start(self) -> None:
@@ -134,7 +135,7 @@ class TelegramClientWrapper:
                 self.api_hash,
                 device_model="Android Go Edition",
                 system_version="Android 13 Go",
-                app_version="0.1.2",
+                app_version="0.1.3",
                 lang_code="en",
                 system_lang_code="en",
                 flood_sleep_threshold=30,
@@ -269,8 +270,16 @@ class TelegramClientWrapper:
             summaries: List[ChatSummary] = []
 
             for d in dialogs:
+                # Cache input entity to prevent "Could not find input entity" error on get_messages
+                entity_obj = getattr(d, "input_entity", None) or getattr(d, "entity", None)
+                if entity_obj:
+                    self._entity_cache[d.id] = entity_obj
+
                 summary = self._convert_telethon_dialog(d, pinned_peer_ids)
                 summaries.append(summary)
+
+                if entity_obj:
+                    self._entity_cache[summary.peer_id] = entity_obj
 
                 # Keep PinStore metadata up to date with user/chat renames
                 if summary.peer_id in pinned_peer_ids:
@@ -312,6 +321,25 @@ class TelegramClientWrapper:
     # Messages & Messaging
     # -------------------------------------------------------------
 
+    async def _resolve_entity(self, chat_id: int):
+        """
+        Safely resolve MTProto entity using in-memory cache, get_input_entity, or get_entity.
+        Prevents 'Could not find the input entity' failures when opening chats or channels.
+        """
+        if chat_id in self._entity_cache:
+            return self._entity_cache[chat_id]
+        try:
+            entity = await self.client.get_input_entity(chat_id)
+            self._entity_cache[chat_id] = entity
+            return entity
+        except Exception:
+            try:
+                entity = await self.client.get_entity(chat_id)
+                self._entity_cache[chat_id] = entity
+                return entity
+            except Exception:
+                return chat_id
+
     def load_messages(
         self,
         chat_id: int,
@@ -319,13 +347,22 @@ class TelegramClientWrapper:
         offset_id: int = 0,
         on_result: Callable[[List[MessageItem], Optional[Exception]], None] = None,
     ) -> None:
-        """Load message history for a conversation with pagination."""
+        """Load message history for a conversation with pagination and error resilience."""
         async def _load():
-            entity = await self.client.get_input_entity(chat_id)
+            entity = await self._resolve_entity(chat_id)
             messages = await self.client.get_messages(
                 entity, limit=limit, offset_id=offset_id
             )
-            items = [self._convert_telethon_message(m) for m in messages if m]
+            items: List[MessageItem] = []
+            for m in messages:
+                if not m:
+                    continue
+                try:
+                    item = self._convert_telethon_message(m, fallback_chat_id=chat_id)
+                    if item:
+                        items.append(item)
+                except Exception as err:
+                    logger.warning("Error parsing message in chat %s: %s", chat_id, err)
             return items
 
         def _done(res, exc):
@@ -343,11 +380,11 @@ class TelegramClientWrapper:
     ) -> None:
         """Send text message with optional reply_to ID."""
         async def _send():
-            entity = await self.client.get_input_entity(chat_id)
+            entity = await self._resolve_entity(chat_id)
             sent = await self.client.send_message(
                 entity, text, reply_to=reply_to_msg_id
             )
-            return self._convert_telethon_message(sent)
+            return self._convert_telethon_message(sent, fallback_chat_id=chat_id)
 
         def _done(res, exc):
             if on_result:
@@ -363,7 +400,7 @@ class TelegramClientWrapper:
     ) -> None:
         """Delete messages by ID."""
         async def _del():
-            entity = await self.client.get_input_entity(chat_id)
+            entity = await self._resolve_entity(chat_id)
             await self.client.delete_messages(entity, message_ids)
             return True
 
@@ -401,13 +438,16 @@ class TelegramClientWrapper:
         last_ts = 0.0
         time_str = ""
         if dialog.message:
-            last_text = dialog.message.raw_text or (
-                "[Media]" if dialog.message.media else ""
-            )
-            if dialog.message.date:
-                dt = dialog.message.date
-                last_ts = dt.timestamp()
-                time_str = dt.strftime("%H:%M")
+            try:
+                last_text = dialog.message.raw_text or dialog.message.message or (
+                    "[Media]" if getattr(dialog.message, "media", None) else ""
+                )
+                if getattr(dialog.message, "date", None):
+                    dt = dialog.message.date
+                    last_ts = dt.timestamp()
+                    time_str = dt.strftime("%H:%M")
+            except Exception:
+                last_text = ""
 
         username = None
         if hasattr(dialog.entity, "username") and dialog.entity.username:
@@ -428,65 +468,116 @@ class TelegramClientWrapper:
             is_pinned_locally=(peer_id in pinned_ids),
         )
 
-    def _convert_telethon_message(self, msg) -> MessageItem:
-        """Convert a Telethon Message object to a lightweight MessageItem."""
+    def _convert_telethon_message(self, msg, fallback_chat_id: int = 0) -> Optional[MessageItem]:
+        """Convert a Telethon Message object to a lightweight MessageItem with error protection."""
+        if not msg:
+            return None
+        if isinstance(msg, types.MessageEmpty):
+            return None
+
         sender_name = "Unknown"
-        sender_id = msg.sender_id or 0
-        if msg.sender:
-            if hasattr(msg.sender, "first_name"):
-                sender_name = msg.sender.first_name or ""
-                if getattr(msg.sender, "last_name", None):
-                    sender_name += f" {msg.sender.last_name}"
-            elif hasattr(msg.sender, "title"):
-                sender_name = msg.sender.title or ""
+        sender_id = getattr(msg, "sender_id", 0) or 0
+        try:
+            if getattr(msg, "sender", None):
+                s = msg.sender
+                if hasattr(s, "first_name"):
+                    sender_name = s.first_name or ""
+                    if getattr(s, "last_name", None):
+                        sender_name += f" {s.last_name}"
+                elif hasattr(s, "title"):
+                    sender_name = s.title or ""
+        except Exception:
+            sender_name = "Unknown"
 
         time_str = ""
         ts = 0.0
-        if msg.date:
-            time_str = msg.date.strftime("%H:%M")
-            ts = msg.date.timestamp()
+        try:
+            if getattr(msg, "date", None):
+                time_str = msg.date.strftime("%H:%M")
+                ts = msg.date.timestamp()
+        except Exception:
+            pass
+
+        # Text extraction (normal text, message, or service action)
+        text = ""
+        try:
+            if getattr(msg, "raw_text", None):
+                text = msg.raw_text
+            elif getattr(msg, "message", None):
+                text = msg.message
+            elif getattr(msg, "action", None):
+                text = f"[{type(msg.action).__name__}]"
+        except Exception:
+            text = ""
 
         # Reply info
         reply_id = None
         reply_text = None
-        if msg.reply_to:
-            reply_id = msg.reply_to.reply_to_msg_id
+        try:
+            if getattr(msg, "reply_to", None):
+                reply_id = getattr(msg.reply_to, "reply_to_msg_id", None)
+        except Exception:
+            pass
 
         # Media detection
         media_type = None
         media_name = None
         media_size = None
-        if msg.media:
-            if isinstance(msg.media, types.MessageMediaPhoto):
-                media_type = "photo"
-            elif isinstance(msg.media, types.MessageMediaDocument):
-                media_type = "document"
-                if hasattr(msg.media.document, "attributes"):
-                    for attr in msg.media.document.attributes:
-                        if isinstance(attr, types.DocumentAttributeFilename):
-                            media_name = attr.file_name
-                size_bytes = getattr(msg.media.document, "size", 0)
-                if size_bytes:
-                    media_size = f"{size_bytes / (1024*1024):.1f} MB"
+        try:
+            if getattr(msg, "media", None):
+                m = msg.media
+                if isinstance(m, types.MessageMediaPhoto):
+                    media_type = "photo"
+                elif isinstance(m, types.MessageMediaDocument):
+                    media_type = "document"
+                    doc = getattr(m, "document", None)
+                    if doc and hasattr(doc, "attributes"):
+                        for attr in doc.attributes:
+                            if isinstance(attr, types.DocumentAttributeFilename):
+                                media_name = attr.file_name
+                    size_bytes = getattr(doc, "size", 0) if doc else 0
+                    if size_bytes:
+                        media_size = f"{size_bytes / (1024*1024):.1f} MB"
+                elif isinstance(m, types.MessageMediaWebPage):
+                    media_type = "webpage"
+                elif isinstance(m, types.MessageMediaGeo):
+                    media_type = "location"
+                elif isinstance(m, types.MessageMediaContact):
+                    media_type = "contact"
+                else:
+                    media_type = "media"
+        except Exception:
+            pass
+
+        # If both text and media are missing, provide a fallback indicator
+        if not text and not media_type and getattr(msg, "action", None):
+            text = "[Service Notification]"
+
+        chat_id = getattr(msg, "chat_id", None) or fallback_chat_id or 0
+        is_out = bool(getattr(msg, "out", False))
+        is_fwd = bool(getattr(msg, "fwd_from", False))
+        is_service = False
+        try:
+            is_service = bool(getattr(msg, "action", False))
+        except Exception:
+            pass
 
         return MessageItem(
-            id=msg.id,
-            chat_id=msg.chat_id or 0,
+            id=getattr(msg, "id", 0),
+            chat_id=chat_id,
             sender_id=sender_id,
-            sender_name=sender_name,
-            text=msg.raw_text or "",
+            sender_name=sender_name.strip() or "Unknown",
+            text=text,
             time_str=time_str,
             timestamp=ts,
-            is_outgoing=bool(msg.out),
+            is_outgoing=is_out,
             reply_to_msg_id=reply_id,
             reply_to_text=reply_text,
             media_type=media_type,
             media_name=media_name,
             media_size_str=media_size,
-            is_forwarded=bool(msg.fwd_from),
-            is_service=isinstance(msg.action, types.TypeMessageAction)
-            if hasattr(msg, "action")
-            else False,
+            is_forwarded=is_fwd,
+            is_service=is_service,
         )
 
     def stop(self) -> None:

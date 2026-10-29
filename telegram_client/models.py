@@ -7,6 +7,22 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
+import unicodedata
+
+
+def sanitize_text(text: Optional[str]) -> str:
+    """
+    Normalize and clean string for reliable UTF-8 rendering on Android.
+    Ensures complex Unicode scripts (e.g. Bangla conjuncts) and UTF-8 strings
+    are canonically composed and free of unprintable control codes.
+    """
+    if not text:
+        return ""
+    try:
+        normalized = unicodedata.normalize("NFC", str(text))
+        return "".join(c for c in normalized if c.isprintable() or c in ("\n", "\t", " "))
+    except Exception:
+        return str(text)
 
 
 class ChatType(Enum):
@@ -49,6 +65,10 @@ class ChatSummary:
     username: Optional[str] = None
     is_pinned_locally: bool = False
 
+    def __post_init__(self):
+        self.title = sanitize_text(self.title)
+        self.last_message_text = sanitize_text(self.last_message_text)
+
     @property
     def initials(self) -> str:
         """Derive 1-2 character initials for the avatar placeholder."""
@@ -90,6 +110,10 @@ class MessageItem:
     forward_from_name: Optional[str] = None
     is_service: bool = False
     delivery_status: str = "sent"
+
+    def __post_init__(self):
+        self.text = sanitize_text(self.text)
+        self.sender_name = sanitize_text(self.sender_name)
 
     @property
     def formatted_time(self) -> str:

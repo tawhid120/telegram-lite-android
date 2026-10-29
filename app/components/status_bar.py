@@ -44,13 +44,13 @@ class StatusBarWidget(BoxLayout):
 
     def show_offline(self) -> None:
         self.color_instruction.rgba = ACCENT_RED
-        self.label.text = "⚠️ Network unavailable. Working in offline mode."
+        self.label.text = "Network unavailable. Working in offline mode."
         self.height = dp(28)
         self.opacity = 1
 
     def show_reconnecting(self) -> None:
         self.color_instruction.rgba = ACCENT_GOLD
-        self.label.text = "🔄 Connecting to Telegram MTProto..."
+        self.label.text = "Connecting to Telegram MTProto..."
         self.height = dp(28)
         self.opacity = 1
 

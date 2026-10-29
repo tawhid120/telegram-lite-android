@@ -272,18 +272,68 @@ class ConversationScreen(Screen):
         self.messages_box.clear_widgets()
         self.messages_box.add_widget(self.load_more_btn)
 
+    def _show_loading(self):
+        self.messages_box.clear_widgets()
+        loading_lbl = Label(
+            text="Loading messages...",
+            font_size="13sp",
+            color=TEXT_SECONDARY,
+            size_hint_y=None,
+            height=dp(50),
+            halign="center",
+        )
+        self.messages_box.add_widget(loading_lbl)
+
+    def _render_error(self, err_text: str):
+        self.messages_box.clear_widgets()
+        err_box = BoxLayout(
+            orientation="vertical",
+            size_hint_y=None,
+            height=dp(110),
+            spacing=dp(8),
+            padding=[dp(16), dp(10), dp(16), dp(10)],
+        )
+        err_lbl = Label(
+            text=f"Could not load conversation.\n{err_text}",
+            font_size="12sp",
+            color=(1, 0.4, 0.4, 1),
+            halign="center",
+        )
+        err_lbl.bind(size=lambda inst, val: setattr(inst, "text_size", val))
+        err_box.add_widget(err_lbl)
+
+        retry_btn = Button(
+            text="Tap to Retry",
+            size_hint=(None, None),
+            size=(dp(130), dp(34)),
+            pos_hint={"center_x": 0.5},
+            background_normal="",
+            background_color=PRIMARY_BLUE,
+            color=(1, 1, 1, 1),
+        )
+        retry_btn.bind(on_release=lambda x: self._load_initial_messages())
+        err_box.add_widget(retry_btn)
+        self.messages_box.add_widget(err_box)
+
     def _load_initial_messages(self):
         if not self.chat_summary:
             return
 
+        self._show_loading()
+
         def _done(items: List[MessageItem], exc: Optional[Exception]):
             def _ui(dt):
-                if items:
+                if exc:
+                    self._render_error(str(exc))
+                elif items:
                     # Sort chronological (oldest to newest)
                     self.messages = list(reversed(items))
                     self._render_messages()
                     # Scroll to bottom
                     Clock.schedule_once(lambda d: setattr(self.scroll, "scroll_y", 0), 0.1)
+                else:
+                    self.messages = []
+                    self._render_messages()
             Clock.schedule_once(_ui, 0)
 
         self.client.load_messages(self.chat_summary.peer_id, limit=30, on_result=_done)
@@ -299,6 +349,8 @@ class ConversationScreen(Screen):
                     earlier_msgs = list(reversed(items))
                     self.messages = earlier_msgs + self.messages
                     self._render_messages()
+                else:
+                    self.load_more_btn.text = "No earlier messages"
             Clock.schedule_once(_ui, 0)
 
         self.client.load_messages(
@@ -307,6 +359,19 @@ class ConversationScreen(Screen):
 
     def _render_messages(self):
         self._clear_messages_view()
+        if not self.messages:
+            empty_lbl = Label(
+                text="No messages in this conversation yet.",
+                font_size="13sp",
+                color=TEXT_SECONDARY,
+                size_hint_y=None,
+                height=dp(50),
+                halign="center",
+            )
+            empty_lbl.bind(size=lambda inst, val: setattr(inst, "text_size", val))
+            self.messages_box.add_widget(empty_lbl)
+            return
+
         is_group = (
             self.chat_summary.chat_type == ChatType.GROUP if self.chat_summary else False
         )

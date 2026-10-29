@@ -37,6 +37,33 @@ logging.basicConfig(
 logger = logging.getLogger("TelegramLite")
 
 
+def setup_unicode_fonts():
+    """
+    Register comprehensive Unicode font covering Latin, Bangla, and UI symbols as default.
+    Prevents missing glyph 'tofu' (empty crossed box ⯐) on Android for Bengali and symbols.
+    """
+    try:
+        from kivy.core.text import LabelBase, DEFAULT_FONT
+        font_regular = os.path.join(BASE_DIR, "assets", "fonts", "NotoSans_Unicode.ttf")
+        font_bold = os.path.join(BASE_DIR, "assets", "fonts", "NotoSans_Unicode_Bold.ttf")
+
+        if os.path.exists(font_regular):
+            kw = {"fn_regular": font_regular}
+            if os.path.exists(font_bold):
+                kw["fn_bold"] = font_bold
+            LabelBase.register(DEFAULT_FONT, **kw)
+            LabelBase.register("Roboto", **kw)
+            logger.info("Unicode Bangla & Symbol font registered successfully as default.")
+        else:
+            logger.warning("Unicode font not found at %s", font_regular)
+    except Exception as e:
+        logger.warning("Failed to register custom Unicode fonts: %s", e)
+
+
+# Register fonts before UI widgets initialize
+setup_unicode_fonts()
+
+
 class TelegramLiteApp(App):
     """
     Main Kivy Application for Telegram Lite.

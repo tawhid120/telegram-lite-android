@@ -53,3 +53,26 @@ def test_message_item():
     )
     assert m.formatted_time == "12:30"
     assert m.is_outgoing is True
+
+
+def test_unicode_bangla_and_emoji_sanitization():
+    from telegram_client.models import sanitize_text
+
+    # Bangla Unicode text
+    bangla_text = "কেমন আছেন? এটি একটি টেলিগ্রাম মেসেজ।"
+    assert sanitize_text(bangla_text) == bangla_text
+
+    # Model integration with Bangla
+    summary = ChatSummary(
+        peer_id=500,
+        title="তাহমিদ হাসান",
+        chat_type=ChatType.PERSONAL,
+        last_message_text="হ্যালো ভাই, কি খবর?",
+    )
+    assert summary.title == "তাহমিদ হাসান"
+    assert summary.last_message_text == "হ্যালো ভাই, কি খবর?"
+    assert len(summary.initials) > 0
+
+    # Unprintable control character stripping
+    corrupt_text = "Test\x00\x08String"
+    assert sanitize_text(corrupt_text) == "TestString"

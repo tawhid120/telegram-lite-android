@@ -183,6 +183,11 @@ def test_full_application_lifecycle_simulation():
         assert len(res) == 100
 
         # 14. Handling empty lists and failed network requests
+        conv_screen._show_loading()
+        assert len(conv_screen.messages_box.children) == 1
+        conv_screen._render_error("Simulated network timeout")
+        assert len(conv_screen.messages_box.children) == 1
+
         client_wrapper._cached_summaries = []
         chats_screen = ChatsScreen(
             client_wrapper=client_wrapper,

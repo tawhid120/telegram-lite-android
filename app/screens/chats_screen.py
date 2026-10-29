@@ -143,7 +143,7 @@ class ChatsScreen(Screen):
             padding=[dp(12), dp(4), dp(12), dp(4)],
         )
         self.search_input = TextInput(
-            hint_text="🔍 Search chats or contacts...",
+            hint_text="Search chats or contacts...",
             multiline=False,
             size_hint=(1, 1),
             font_size="13sp",

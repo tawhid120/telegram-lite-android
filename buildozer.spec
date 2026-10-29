@@ -13,10 +13,10 @@ package.domain = org.tawhid
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,json
+source.include_exts = py,png,jpg,kv,atlas,json,ttf
 
 # (list) List of inclusions using pattern matching
-source.include_patterns = assets/*,app/*,storage/*,telegram_client/*,recipes/*
+source.include_patterns = assets/*,assets/fonts/*,app/*,storage/*,telegram_client/*,recipes/*
 
 # (list) Source files to exclude (let empty to not exclude anything)
 source.exclude_exts = spec,tmp,log
@@ -25,7 +25,7 @@ source.exclude_exts = spec,tmp,log
 source.exclude_dirs = tests,bin,.buildozer,.github,docs,scripts,.pytest_cache
 
 # (str) Application versioning
-version = 0.1.2
+version = 0.1.3
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
