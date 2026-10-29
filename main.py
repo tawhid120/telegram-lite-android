@@ -30,12 +30,12 @@ def main():
             from kivy.app import App
             from kivy.uix.label import Label
             from kivy.uix.boxlayout import BoxLayout
-            from kivy.uix.scrollview import ScrollView
+            from kivy.uix.textinput import TextInput
             from kivy.graphics import Color, Rectangle
 
             class ErrorCrashApp(App):
                 def build(self):
-                    box = BoxLayout(orientation="vertical", padding=20)
+                    box = BoxLayout(orientation="vertical", padding=16, spacing=10)
                     with box.canvas.before:
                         Color(0.1, 0.1, 0.12, 1)
                         self.rect = Rectangle(size=box.size, pos=box.pos)
@@ -46,26 +46,23 @@ def main():
 
                     title = Label(
                         text="Telegram Lite - Startup Diagnostic",
-                        font_size="18sp",
+                        font_size="16sp",
                         bold=True,
-                        color=(1, 0.3, 0.3, 1),
+                        color=(1, 0.35, 0.35, 1),
                         size_hint_y=None,
-                        height=50,
+                        height=40,
                     )
                     box.add_widget(title)
 
-                    scroll = ScrollView()
-                    lbl = Label(
-                        text=f"The application encountered an unexpected error on launch:\n\n{error_details}",
-                        font_size="12sp",
-                        color=(0.9, 0.9, 0.9, 1),
-                        size_hint_y=None,
-                        halign="left",
-                        valign="top",
+                    txt = TextInput(
+                        text=f"Startup Error Encountered:\n\n{error_details}",
+                        readonly=True,
+                        background_color=(0.15, 0.15, 0.18, 1),
+                        foreground_color=(1, 0.95, 0.95, 1),
+                        font_size="11sp",
+                        size_hint=(1, 1),
                     )
-                    lbl.bind(texture_size=lbl.setter("size"))
-                    scroll.add_widget(lbl)
-                    box.add_widget(scroll)
+                    box.add_widget(txt)
                     return box
 
             ErrorCrashApp().run()

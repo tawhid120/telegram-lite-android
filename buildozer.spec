@@ -25,11 +25,11 @@ source.exclude_exts = spec,tmp,log
 source.exclude_dirs = tests,bin,.buildozer,.github,docs,scripts,.pytest_cache
 
 # (str) Application versioning
-version = 0.1.1
+version = 0.1.2
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.3.1,telethon,pyaes,rsa,pyjnius,sqlite3,openssl
+requirements = python3,kivy==2.3.1,telethon,pyaes,rsa,pyasn1,pyjnius,sqlite3,openssl
 
 # (str) Presplash of the application
 presplash.filename = %(source.dir)s/assets/presplash.png

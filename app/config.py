@@ -23,7 +23,7 @@ class AppConfig:
     """
 
     DEFAULT_APP_NAME = "Telegram Lite"
-    VERSION = "0.1.1"
+    VERSION = "0.1.2"
 
     # User-configured default API credentials
     DEFAULT_API_ID = 20193909
