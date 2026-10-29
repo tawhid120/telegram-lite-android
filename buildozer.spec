@@ -16,7 +16,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 
 # (list) List of inclusions using pattern matching
-source.include_patterns = assets/*,app/*,storage/*,telegram_client/*
+source.include_patterns = assets/*,app/*,storage/*,telegram_client/*,recipes/*
 
 # (list) Source files to exclude (let empty to not exclude anything)
 source.exclude_exts = spec,tmp,log
@@ -29,7 +29,7 @@ version = 0.1.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.3.1,telethon,pyaes,rsa,urllib3,certifi,pyjnius
+requirements = python3,kivy==2.3.1,pyjnius,sqlite3,openssl,telethon,pyaes,rsa,pyasn1
 
 # (str) Presplash of the application
 presplash.filename = %(source.dir)s/assets/presplash.png
@@ -70,6 +70,12 @@ android.entrypoint = org.kivy.android.PythonActivity
 
 # (list) List of architectures to build for
 android.archs = arm64-v8a, armeabi-v7a
+
+# (str) python-for-android branch to use
+p4a.branch = develop
+
+# (str) Directory for local custom build recipes
+p4a.local_recipes = ./recipes
 
 # (bool) Disallow Android system backup to protect sensitive session credentials
 android.allow_backup = False
