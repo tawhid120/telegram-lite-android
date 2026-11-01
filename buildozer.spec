@@ -25,7 +25,7 @@ source.exclude_exts = spec,tmp,log
 source.exclude_dirs = tests,bin,.buildozer,.github,docs,scripts,.pytest_cache
 
 # (str) Application versioning
-version = 0.1.3
+version = 0.1.4
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
@@ -41,7 +41,7 @@ icon.filename = %(source.dir)s/assets/icon.png
 orientation = portrait
 
 # (list) Permissions
-android.permissions = INTERNET,ACCESS_NETWORK_STATE,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+android.permissions = INTERNET,ACCESS_NETWORK_STATE,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_IMAGES,READ_MEDIA_VIDEO,READ_MEDIA_AUDIO
 
 # (int) Target Android API, should be as high as possible.
 android.api = 33

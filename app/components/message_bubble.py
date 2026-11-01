@@ -1,10 +1,14 @@
 """
 Lightweight Chat Message Bubble Widget for Android Go.
-Renders incoming and outgoing messages with reply previews and timestamps.
+Renders incoming and outgoing messages with reply previews, media preview/download, and timestamps.
 """
 
+import os
+from typing import Optional, Callable
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.image import Image
 from kivy.graphics import Color, RoundedRectangle
 from kivy.metrics import dp
 
@@ -16,19 +20,28 @@ from app.ui_constants import (
     TEXT_SECONDARY,
     PRIMARY_BLUE,
     PRIMARY_BLUE_DARK,
+    ACCENT_GREEN,
 )
 from telegram_client.models import MessageItem
 
 
 class MessageBubbleWidget(BoxLayout):
     """
-    Message bubble layout with responsive alignment (left for incoming, right for outgoing).
+    Message bubble layout with responsive alignment (left for incoming, right for outgoing)
+    and full support for viewing photos and downloading documents/videos/media.
     """
 
-    def __init__(self, message: MessageItem, is_group: bool = False, **kwargs):
+    def __init__(
+        self,
+        message: MessageItem,
+        is_group: bool = False,
+        on_media_action_callback: Optional[Callable[[MessageItem, str], None]] = None,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.message = message
         self.is_group = is_group
+        self.on_media_action_callback = on_media_action_callback
 
         self.orientation = "horizontal"
         self.size_hint_y = None
@@ -99,23 +112,83 @@ class MessageBubbleWidget(BoxLayout):
             reply_box.add_widget(rep_lbl)
             self.bubble.add_widget(reply_box)
 
-        # Media indicator
+        # Media section
         if message.media_type:
-            media_info = f"[{message.media_type.upper()}]"
+            media_box = BoxLayout(
+                orientation="vertical",
+                size_hint_y=None,
+                spacing=dp(4),
+                padding=[dp(4), dp(4), dp(4), dp(4)],
+            )
+            media_box.bind(minimum_height=media_box.setter("height"))
+
+            media_label_text = f"[{message.media_type.upper()}]"
             if message.media_name:
-                media_info += f" {message.media_name}"
+                media_label_text += f" {message.media_name}"
             if message.media_size_str:
-                media_info += f" ({message.media_size_str})"
+                media_label_text += f" ({message.media_size_str})"
+
             media_lbl = Label(
-                text=media_info,
+                text=media_label_text,
                 font_size="12sp",
+                bold=True,
                 color=PRIMARY_BLUE,
                 halign="left",
                 size_hint_y=None,
                 height=dp(20),
             )
             media_lbl.bind(size=lambda inst, val: setattr(inst, "text_size", val))
-            self.bubble.add_widget(media_lbl)
+            media_box.add_widget(media_lbl)
+
+            # Check if media file is already downloaded and present on disk
+            has_local = bool(message.local_media_path and os.path.exists(message.local_media_path))
+
+            if has_local:
+                # If image, show photo thumbnail/preview
+                is_image = message.media_type == "photo" or (
+                    message.media_name and message.media_name.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
+                )
+                if is_image:
+                    img_widget = Image(
+                        source=message.local_media_path,
+                        size_hint=(1, None),
+                        height=dp(170),
+                        allow_stretch=True,
+                        keep_ratio=True,
+                    )
+                    media_box.add_widget(img_widget)
+
+                # Open / View button
+                open_btn = Button(
+                    text="👁 Open / View Media",
+                    font_size="12sp",
+                    bold=True,
+                    size_hint_y=None,
+                    height=dp(30),
+                    background_normal="",
+                    background_color=ACCENT_GREEN,
+                    color=(1, 1, 1, 1),
+                )
+                open_btn.bind(on_release=lambda x: self._on_media_clicked("open"))
+                media_box.add_widget(open_btn)
+            else:
+                # Download button
+                btn_text = "⏳ Downloading..." if message.is_downloading else f"📥 Download ({message.media_size_str or 'Media'})"
+                dl_btn = Button(
+                    text=btn_text,
+                    font_size="12sp",
+                    bold=True,
+                    size_hint_y=None,
+                    height=dp(32),
+                    background_normal="",
+                    background_color=DARK_CARD if message.is_downloading else PRIMARY_BLUE,
+                    color=(1, 1, 1, 1),
+                    disabled=message.is_downloading,
+                )
+                dl_btn.bind(on_release=lambda x: self._on_media_clicked("download"))
+                media_box.add_widget(dl_btn)
+
+            self.bubble.add_widget(media_box)
 
         # Message text
         if message.text:
@@ -168,6 +241,10 @@ class MessageBubbleWidget(BoxLayout):
             self.add_widget(BoxLayout(size_hint_x=0.2))
 
         self.height = dp(60)  # Default fallback height
+
+    def _on_media_clicked(self, action: str):
+        if self.on_media_action_callback:
+            self.on_media_action_callback(self.message, action)
 
     def _update_bubble_bg(self, instance, value):
         self.bg_rect.pos = instance.pos

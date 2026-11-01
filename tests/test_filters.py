@@ -54,3 +54,61 @@ def test_four_tab_filtering_and_pin_prioritization():
     channel_res = wrapper.filter_cached_conversations(ChatType.CHANNEL)
     assert len(channel_res) == 1
     assert channel_res[0].peer_id == 5
+
+
+def test_telegram_chat_folder_filtering():
+    from telegram_client.models import ChatFolder
+
+    secure_store = MagicMock()
+    pin_store = MagicMock()
+    cache_manager = MagicMock()
+
+    wrapper = TelegramClientWrapper(
+        api_id=123,
+        api_hash="abc",
+        secure_store=secure_store,
+        pin_store=pin_store,
+        cache_manager=cache_manager,
+    )
+
+    c1 = ChatSummary(peer_id=10, title="Boss", chat_type=ChatType.PERSONAL, is_contact=True)
+    c2 = ChatSummary(peer_id=20, title="Team Chat", chat_type=ChatType.GROUP)
+    c3 = ChatSummary(peer_id=30, title="Broadcast", chat_type=ChatType.CHANNEL)
+    c4 = ChatSummary(peer_id=40, title="Bot Chat", chat_type=ChatType.PERSONAL, is_bot=True)
+    c5 = ChatSummary(peer_id=50, title="Spam Group", chat_type=ChatType.GROUP)
+
+    wrapper._cached_summaries = [c1, c2, c3, c4, c5]
+
+    # Folder 1: "Work" - includes groups, excludes spam group (50), pinned team chat (20)
+    work_folder = ChatFolder(
+        id=1,
+        title="Work",
+        emoticon="💼",
+        groups=True,
+        pinned_peer_ids=[20],
+        exclude_peer_ids=[50],
+    )
+    work_res = wrapper.filter_conversations_by_folder(work_folder)
+    assert len(work_res) == 1
+    assert work_res[0].peer_id == 20
+
+    # Folder 2: "Channels & Broadcasts"
+    channel_folder = ChatFolder(
+        id=2,
+        title="Channels",
+        emoticon="📢",
+        broadcasts=True,
+    )
+    chan_res = wrapper.filter_conversations_by_folder(channel_folder)
+    assert len(chan_res) == 1
+    assert chan_res[0].peer_id == 30
+
+    # Folder 3: Explicit peer inclusions
+    custom_folder = ChatFolder(
+        id=3,
+        title="Custom VIP",
+        include_peer_ids=[10, 40],
+    )
+    custom_res = wrapper.filter_conversations_by_folder(custom_folder)
+    assert len(custom_res) == 2
+    assert {c.peer_id for c in custom_res} == {10, 40}

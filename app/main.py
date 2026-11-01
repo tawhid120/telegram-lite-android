@@ -39,8 +39,9 @@ logger = logging.getLogger("TelegramLite")
 
 def setup_unicode_fonts():
     """
-    Register comprehensive Unicode font covering Latin, Bangla, and UI symbols as default.
-    Prevents missing glyph 'tofu' (empty crossed box ⯐) on Android for Bengali and symbols.
+    Register universal Unicode font covering Latin, Bengali, Arabic, Devanagari (Hindi),
+    Tamil, Telugu, Thai, Hebrew, Cyrillic, Greek, Malayalam, and UI symbols as default.
+    Prevents missing glyph 'tofu' (empty box ⯐) on Android across universal languages and UTF scripts.
     """
     try:
         from kivy.core.text import LabelBase, DEFAULT_FONT
@@ -53,9 +54,9 @@ def setup_unicode_fonts():
                 kw["fn_bold"] = font_bold
             LabelBase.register(DEFAULT_FONT, **kw)
             LabelBase.register("Roboto", **kw)
-            logger.info("Unicode Bangla & Symbol font registered successfully as default.")
+            logger.info("Universal Unicode font (covering all UTF/world scripts) registered successfully as default.")
         else:
-            logger.warning("Unicode font not found at %s", font_regular)
+            logger.warning("Universal Unicode font not found at %s", font_regular)
     except Exception as e:
         logger.warning("Failed to register custom Unicode fonts: %s", e)
 

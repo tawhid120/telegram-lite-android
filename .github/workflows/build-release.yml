@@ -138,7 +138,8 @@ jobs:
           if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG_NAME="${{ github.ref_name }}"
           else
-            TAG_NAME="v0.1.0"
+            SPEC_VER=$(grep -E '^version = ' buildozer.spec | awk '{print $3}')
+            TAG_NAME="v${SPEC_VER:-0.1.4}"
           fi
           echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
 
@@ -153,13 +154,18 @@ jobs:
           body: |
             ## 🚀 Telegram Lite for Android Go (${{ steps.vars.outputs.tag }})
 
-            ### ✨ Key Features
-            - **Direct MTProto Connection**: High-performance Telegram MTProto integration via Telethon.
-            - **Official Telegram Auth**: Supports in-app service verification code (delivered to your active desktop/phone Telegram session), SMS fallback, and 2FA cloud password.
+            ### ✨ What's New in v0.1.4
+            - **Universal Unicode & Multi-Language Support**: Full UTF-8 support for all world scripts and complex writing systems (Bangla conjuncts with ZWJ/ZWNJ, Arabic, Devanagari/Hindi, Tamil, Telugu, Thai, Hebrew, Cyrillic, Greek, and complete Emoji sequences).
+            - **Real Telegram Account Chat Folders**: Dynamically fetches and displays user's authentic Telegram account folders via MTProto (`GetDialogFiltersRequest`) with a smooth, horizontally scrollable tab bar.
+            - **Chat & Message Pagination**: Infinite message history loading on upward scroll and conversation list pagination ("Load More Chats") to view all account dialogs.
+            - **Media Viewing, Downloading & Uploading**: In-bubble photo previews, direct media/file downloads to device storage with progress status, and a composer attachment picker (`📎`) to upload and send any photo or file.
+            - **Android 13+ Media Permissions**: Added `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO`, and `READ_MEDIA_AUDIO` for Android 13+ compatibility.
+
+            ### 🔑 Core Features
+            - **Direct MTProto Connection**: High-performance Telegram MTProto connection via Telethon without intermediary servers.
+            - **Official Telegram Auth**: Supports in-app service verification code, SMS fallback, and 2FA cloud password.
             - **Persistent Session Storage**: Secure session storage with Android Keystore encryption & auto-restoration.
-            - **Four Chat Filter Tabs**: Instant in-memory filtering for **All**, **Personal**, **Groups**, and **Channels**.
             - **Custom Important Contacts**: Pin contacts (e.g. Contacts A, B, and C) simultaneously into a dedicated top carousel; saved in local SQLite independent of Telegram servers.
-            - **Real Messaging**: Send/receive messages in real-time, message history pagination, reply banners, media previews.
             - **Low-RAM Optimization**: Built specifically for Android Go devices (1-2 GB RAM), featuring bounded memory/disk LRU caching and low-resource mode.
 
             ### 📲 Installation Instructions

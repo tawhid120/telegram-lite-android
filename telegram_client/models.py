@@ -4,23 +4,27 @@ Prevents passing heavy MTProto objects into UI widgets to conserve memory on And
 """
 
 from enum import Enum
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, List
 from datetime import datetime
 import unicodedata
 
 
 def sanitize_text(text: Optional[str]) -> str:
     """
-    Normalize and clean string for reliable UTF-8 rendering on Android.
-    Ensures complex Unicode scripts (e.g. Bangla conjuncts) and UTF-8 strings
-    are canonically composed and free of unprintable control codes.
+    Normalize and clean string for universal UTF-8 rendering on Android.
+    Ensures complex Unicode scripts (Bangla conjuncts with ZWJ/ZWNJ, Arabic,
+    Devanagari, RTL marks, and full Emoji sets) are canonically composed (NFC)
+    while removing only unprintable C0/C1 control characters.
     """
     if not text:
         return ""
     try:
         normalized = unicodedata.normalize("NFC", str(text))
-        return "".join(c for c in normalized if c.isprintable() or c in ("\n", "\t", " "))
+        return "".join(
+            c for c in normalized
+            if c in ("\n", "\r", "\t") or (unicodedata.category(c) != "Cc" and ord(c) != 0x7F)
+        )
     except Exception:
         return str(text)
 
@@ -51,6 +55,30 @@ class AuthState(Enum):
 
 
 @dataclass
+class ChatFolder:
+    """Telegram Chat Folder (Dialog Filter)."""
+    id: int
+    title: str
+    emoticon: Optional[str] = None
+    pinned_peer_ids: List[int] = field(default_factory=list)
+    include_peer_ids: List[int] = field(default_factory=list)
+    exclude_peer_ids: List[int] = field(default_factory=list)
+    contacts: bool = False
+    non_contacts: bool = False
+    groups: bool = False
+    broadcasts: bool = False
+    bots: bool = False
+    exclude_muted: bool = False
+    exclude_read: bool = False
+    exclude_archived: bool = False
+
+    def __post_init__(self):
+        self.title = sanitize_text(self.title)
+        if self.emoticon:
+            self.emoticon = sanitize_text(self.emoticon)
+
+
+@dataclass
 class ChatSummary:
     """Lightweight representation of a conversation item."""
     peer_id: int
@@ -64,6 +92,9 @@ class ChatSummary:
     avatar_path: Optional[str] = None
     username: Optional[str] = None
     is_pinned_locally: bool = False
+    is_contact: bool = False
+    is_bot: bool = False
+    is_archived: bool = False
 
     def __post_init__(self):
         self.title = sanitize_text(self.title)
@@ -110,6 +141,8 @@ class MessageItem:
     forward_from_name: Optional[str] = None
     is_service: bool = False
     delivery_status: str = "sent"
+    local_media_path: Optional[str] = None
+    is_downloading: bool = False
 
     def __post_init__(self):
         self.text = sanitize_text(self.text)

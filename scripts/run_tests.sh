@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
+# If pytest is not in current PATH, try standard venv paths
+if ! command -v pytest >/dev/null 2>&1; then
+    if [ -f "/root/venv/bin/pytest" ]; then
+        export PATH="/root/venv/bin:$PATH"
+    elif [ -f "$HOME/.venv/bin/pytest" ]; then
+        export PATH="$HOME/.venv/bin:$PATH"
+    fi
+fi
+
 echo "=== Running Telegram Lite Automated Test Suite ==="
 
 # Ensure headless virtual display is available if running on headless Linux

@@ -125,3 +125,59 @@ def test_message_bubble_widget():
     )
     bubble_in = MessageBubbleWidget(msg_in, is_group=True)
     assert bubble_in.message.is_outgoing is False
+
+
+def test_message_bubble_media_and_actions():
+    media_cb = MagicMock()
+    msg_media = MessageItem(
+        id=3,
+        chat_id=10,
+        sender_id=300,
+        sender_name="Alice",
+        text="Photo caption",
+        time_str="14:05",
+        timestamp=1002,
+        is_outgoing=False,
+        media_type="photo",
+        media_name="photo_10_3.jpg",
+        media_size_str="2.5 MB",
+    )
+    bubble = MessageBubbleWidget(msg_media, on_media_action_callback=media_cb)
+    assert bubble.message.media_type == "photo"
+
+    # Simulate download action
+    bubble._on_media_clicked("download")
+    media_cb.assert_called_once_with(msg_media, "download")
+
+
+def test_chats_screen_dynamic_folders():
+    from telegram_client.models import ChatFolder
+
+    client = MagicMock()
+    folder1 = ChatFolder(id=1, title="Personal VIP", emoticon="⭐️")
+    folder2 = ChatFolder(id=2, title="Crypto News", emoticon="📈")
+    client._cached_folders = [folder1, folder2]
+    client._cached_summaries = []
+
+    pin_store = MagicMock()
+    pin_store.get_pinned_chats.return_value = []
+
+    screen = ChatsScreen(
+        client_wrapper=client,
+        pin_store=pin_store,
+        on_chat_selected_callback=MagicMock(),
+        on_settings_clicked_callback=MagicMock(),
+    )
+
+    # Rebuild tabs with the mock folders
+    screen._rebuild_folder_tabs()
+    # Check that dynamic folder tabs exist: All + folder1 + folder2 = 3 buttons
+    assert len(screen.folder_tab_buttons) == 3
+    assert None in screen.folder_tab_buttons
+    assert 1 in screen.folder_tab_buttons
+    assert 2 in screen.folder_tab_buttons
+
+    # Select folder 1
+    screen.select_folder(folder1)
+    assert screen.current_folder == folder1
+    client.filter_conversations_by_folder.assert_called_with(folder1)
