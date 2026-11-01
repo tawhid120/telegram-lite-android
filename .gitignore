@@ -1,62 +1,16 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Telegram session and credential files (CRITICAL SECURITY)
-*.session
-*.session-journal
-*.session-wal
-*.session-shm
-session/
-sessions/
-config.json
-.env
-*.env
-tg_credentials.json
-
-# Local database and cache
-*.db-journal
-*.db-wal
-*.sqlite-journal
-*.sqlite-wal
-data/
-cache/
-local_storage/
-*.log
-
-# Keystores and private signing keys
-*.keystore
-*.jks
-*.key
-*.pem
-*.p12
-
-# Buildozer and Android build artifacts
-.buildozer/
-bin/
-*.apk
-*.aab
-build/
-dist/
-
-# Testing and coverage
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-
-# Virtual environments
-venv/
-.venv/
-env/
-.env/
-
-# IDE and OS
 .idea/
-.vscode/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
+.gradle/
+build/
+obj/
+*.iml
+local.properties
+TMessagesProj/.cxx/
+TMessagesProj/jniLibs/
+TMessagesProj/jniRes/
+**/.DS_Store
+TMessagesProj/afat/
+TMessagesProj_App/afat/
+TMessagesProj_AppHockeyApp/afat/
+TMessagesProj_AppStandalone/afat/
+TMessagesProj_AppHuawei/afat/
+TMessagesProj/jni/ffmpeg/build_android
