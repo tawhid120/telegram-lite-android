@@ -1,3 +1,18 @@
+## Telegram Messenger for Android (Custom Build)
+
+[Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.
+This repository contains the official Telegram Android source code configured with custom developer API credentials, in-app session code login support, and a fixed, permanent release keystore for reproducible builds and seamless app upgrades.
+
+### 🔑 Configuration Highlights
+- **Custom API Credentials**: Configured in `TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java` (`APP_ID = 20193909`, `APP_HASH = "82cd035fc1eb439bda68b2bfc75a57cb"`).
+- **Session Code Verification**: Directly receives Telegram verification codes on your existing active Telegram sessions (Desktop / Web / other devices) without carrier SMS blocks.
+- **Permanent Release Signature**: Built and signed with a permanent fixed keystore (`TMessagesProj/config/release.keystore`).
+  - **Certificate Fingerprint (SHA-256)**: `A0:8D:7D:C3:23:DD:F7:1E:F3:20:19:44:39:7E:0D:3C:CE:7D:40:84:72:63:E1:1F:32:8B:68:BB:E1:92:29:AB`
+  - **Key Alias**: `androidkey`
+  - **Upgrade Guarantee**: All future releases built with this repository share this exact cryptographic certificate, preventing `INSTALL_FAILED_UPDATE_INCOMPATIBLE` signature mismatch errors when updating installed APKs.
+
+---
+
 ## Telegram messenger for Android
 
 [Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.
