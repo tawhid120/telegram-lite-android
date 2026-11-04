@@ -64,16 +64,16 @@ jobs:
           fi
           echo "Found APK at $APK_PATH"
           mkdir -p release_bin
-          cp "$APK_PATH" release_bin/Telegram-v13.1.1-Standalone-Release.apk
-          echo "apk_file=release_bin/Telegram-v13.1.1-Standalone-Release.apk" >> $GITHUB_OUTPUT
+          cp "$APK_PATH" release_bin/Telegram-Lite-v13.1.1-Standalone-Release.apk
+          echo "apk_file=release_bin/Telegram-Lite-v13.1.1-Standalone-Release.apk" >> $GITHUB_OUTPUT
           
           echo "=== APK Signer Certificate Verification ==="
-          $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose --print-certs release_bin/Telegram-v13.1.1-Standalone-Release.apk
+          $ANDROID_HOME/build-tools/36.0.0/apksigner verify --verbose --print-certs release_bin/Telegram-Lite-v13.1.1-Standalone-Release.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Telegram-Official-Release-APK
+          name: Telegram-Lite-Release-APK
           path: release_bin/*.apk
 
       - name: Determine Version Tag
@@ -90,16 +90,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.vars.outputs.tag }}
-          name: "Official Telegram Android ${{ steps.vars.outputs.tag }}"
+          name: "Telegram Lite Android ${{ steps.vars.outputs.tag }}"
           draft: false
           prerelease: false
           files: release_bin/*.apk
           body: |
-            ## 🚀 Official Telegram Android (${{ steps.vars.outputs.tag }})
+            ## 🚀 Telegram Lite Android (${{ steps.vars.outputs.tag }})
 
-            Official Telegram Android v13.1.1 codebase with custom API credentials, seamless session verification login, and fixed permanent cryptographic signing.
+            Telegram Lite Android v13.1.1 codebase with dedicated package name (`org.telegram.messenger.lite`), allowing seamless side-by-side coexistence with the official Telegram app, custom API credentials, seamless session verification login, and fixed permanent cryptographic signing.
 
             ### 🔑 Key Updates & Improvements
+            - **Dedicated Independent Package Name (`org.telegram.messenger.lite`)**: Resolved package collision with official Telegram (`org.telegram.messenger` and `org.telegram.messenger.web`). Now both official Telegram and Telegram Lite can be installed and run simultaneously on the same device without overwriting each other.
             - **Official Telegram Android Engine**: Switched fully to the official Telegram Android codebase (`https://github.com/DrKLO/Telegram.git`). All official features, UI, media handling, themes, voice/video calls, and chat folders are natively supported.
             - **Custom API ID & Hash Integration**: Pre-configured with custom Telegram Developer credentials (`API ID: 20193909`).
             - **In-App Verification Session Login**: Verification codes are received directly within your active Telegram sessions (Desktop, Web, or other mobile apps) without reliance on SMS carriers.
@@ -107,7 +108,7 @@ jobs:
 
             ### 📲 Installation Instructions
             1. Download the attached `.apk` file below.
-            2. If updating from a previous version signed with an ephemeral debug signature, uninstall the previous version once. All future updates using this permanent keystore can be upgraded directly!
+            2. Can be installed directly alongside the official Telegram application.
             3. Open the app, enter your phone number, and enter the verification code sent to your active Telegram device.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

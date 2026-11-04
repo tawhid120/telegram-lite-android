@@ -4,6 +4,7 @@
 This repository contains the official Telegram Android source code configured with custom developer API credentials, in-app session code login support, and a fixed, permanent release keystore for reproducible builds and seamless app upgrades.
 
 ### 🔑 Configuration Highlights
+- **Dedicated Independent Package Name (`org.telegram.messenger.lite`)**: Configured with a unique application ID to allow side-by-side coexistence with the official Telegram app (`org.telegram.messenger` and `org.telegram.messenger.web`). Will not overwrite or interfere with your existing Telegram installation.
 - **Custom API Credentials**: Configured in `TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java` (`APP_ID = 20193909`, `APP_HASH = "82cd035fc1eb439bda68b2bfc75a57cb"`).
 - **Session Code Verification**: Directly receives Telegram verification codes on your existing active Telegram sessions (Desktop / Web / other devices) without carrier SMS blocks.
 - **Permanent Release Signature**: Built and signed with a permanent fixed keystore (`TMessagesProj/config/release.keystore`).

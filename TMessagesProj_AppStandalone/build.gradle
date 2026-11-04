@@ -75,7 +75,7 @@ android {
             debuggable true
             jniDebuggable true
             signingConfig signingConfigs.debug
-            applicationIdSuffix ".web"
+            applicationIdSuffix ""
             minifyEnabled false
             multiDexEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), '../TMessagesProj/proguard-rules.pro'
@@ -86,7 +86,7 @@ android {
             debuggable false
             jniDebuggable false
             signingConfig signingConfigs.release
-            applicationIdSuffix ".web"
+            applicationIdSuffix ""
             minifyEnabled true
             shrinkResources true
             multiDexEnabled true
@@ -156,7 +156,7 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    namespace 'org.telegram.messenger.web'
+    namespace 'org.telegram.messenger.lite'
 
     lintOptions {
         checkReleaseBuilds false
